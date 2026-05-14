@@ -3542,3 +3542,19 @@ body {
   align-items: center;
   justify-content: center;
 } 
+.google-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: white;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.google-btn:hover {
+  background: #f1f5f9;
+}
