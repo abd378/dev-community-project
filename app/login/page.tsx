@@ -44,7 +44,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://dev-community-app.vercel.app/dashboard",
+       redirectTo: "https://dev-community-app.vercel.app/dashboard",
       },
     });
 
