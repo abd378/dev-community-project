@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Turnstile from "react-turnstile";
 import { supabase } from "@/lib/supabase/client";
 
 export default function SignupPage() {
@@ -9,6 +10,7 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const [captchaToken, setCaptchaToken] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,8 +19,14 @@ export default function SignupPage() {
     setLoading(true);
 
     if (!fullName || !email || !password) {
-      setLoading(false);
       setMessage("Please fill all fields.");
+      setLoading(false);
+      return;
+    }
+
+    if (!captchaToken) {
+      setMessage("Please verify that you are human.");
+      setLoading(false);
       return;
     }
 
@@ -36,24 +44,24 @@ export default function SignupPage() {
 
     if (error) {
       setMessage(error.message);
-      alert(error.message);
       return;
     }
 
-    alert("Account created successfully. Now login.");
-    window.location.assign("/login");
+    alert("Account created successfully.");
+    window.location.href = "/login";
   };
 
   return (
     <main className="auth-page">
       <section className="auth-card">
         <p className="auth-badge">Join DevHub</p>
+
         <h1>Create Account</h1>
 
         <div className="auth-form">
           <input
             type="text"
-            placeholder="Full name"
+            placeholder="Full Name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
           />
@@ -69,19 +77,28 @@ export default function SignupPage() {
             type="password"
             placeholder="Password"
             value={password}
-            minLength={6}
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <button type="button" onClick={handleSignup} disabled={loading}>
+          <Turnstile
+            sitekey={
+              process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""
+            }
+            onVerify={(token) => {
+              setCaptchaToken(token);
+            }}
+          />
+
+          <button onClick={handleSignup} disabled={loading}>
             {loading ? "Creating..." : "Create Account"}
           </button>
+
+          {message && <p>{message}</p>}
         </div>
 
-        {message && <p className="auth-message">{message}</p>}
-
         <p className="auth-switch">
-          Already have an account? <Link href="/login">Login</Link>
+          Already have an account?{" "}
+          <Link href="/login">Login</Link>
         </p>
       </section>
     </main>
