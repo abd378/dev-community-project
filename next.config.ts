@@ -1,13 +1,6 @@
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
-  allowedDevOrigins: [
-    "http://172.20.10.2:3000",
-    "http://192.168.1.102:3000",
-    "https://*.serveo.net",
-    "https://*.loca.lt",
-  ],
-
   async headers() {
     return [
       {
