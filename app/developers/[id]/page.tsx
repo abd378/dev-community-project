@@ -39,8 +39,10 @@ export default function PublicDeveloperProfilePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [currentUserId, setCurrentUserId] = useState("");
   const [follow, setFollow] = useState<Follow | null>(null);
+
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -49,6 +51,8 @@ export default function PublicDeveloperProfilePage() {
   }, []);
 
   const loadDeveloperData = async () => {
+    setLoading(true);
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -57,26 +61,23 @@ export default function PublicDeveloperProfilePage() {
       setCurrentUserId(user.id);
     }
 
-    const { data: profileData, error: profileError } = await supabase
+    const { data: profileData } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", id)
-      .eq("is_public", true)
-      .single();
+      .maybeSingle();
 
-    if (!profileError && profileData) {
+    if (profileData) {
       setDeveloper(profileData);
     }
 
-    const { data: projectsData, error: projectsError } = await supabase
+    const { data: projectsData } = await supabase
       .from("projects")
       .select("*")
       .eq("user_id", id)
       .order("created_at", { ascending: false });
 
-    if (!projectsError && projectsData) {
-      setProjects(projectsData);
-    }
+    setProjects(projectsData || []);
 
     const { count: followers } = await supabase
       .from("follows")
@@ -100,12 +101,9 @@ export default function PublicDeveloperProfilePage() {
         .select("*")
         .eq("follower_id", user.id)
         .eq("following_id", id)
-        .neq("status", "declined")
         .maybeSingle();
 
-      if (followData) {
-        setFollow(followData);
-      }
+      setFollow(followData || null);
     }
 
     setLoading(false);
@@ -136,12 +134,8 @@ export default function PublicDeveloperProfilePage() {
       }
 
       setFollow(null);
-
-      if (follow.status === "accepted") {
-        setFollowersCount((prev) => Math.max(prev - 1, 0));
-      }
-
       setMessage("Follow request removed.");
+      window.dispatchEvent(new Event("notifications-updated"));
       return;
     }
 
@@ -160,15 +154,17 @@ export default function PublicDeveloperProfilePage() {
       return;
     }
 
-    setFollow(data);
-    setMessage("Follow request sent. Waiting for approval.");
-  };
+    await supabase.from("notifications").insert({
+      user_id: id,
+      sender_id: currentUserId,
+      type: "follow",
+      content: "sent you a follow request.",
+      is_read: false,
+    });
 
-  const getFollowButtonText = () => {
-    if (!follow) return "Follow";
-    if (follow.status === "pending") return "Request Sent";
-    if (follow.status === "accepted") return "Following";
-    return "Follow";
+    setFollow(data);
+    setMessage("Follow request sent.");
+    window.dispatchEvent(new Event("notifications-updated"));
   };
 
   if (loading) {
@@ -218,22 +214,23 @@ export default function PublicDeveloperProfilePage() {
 
             <p className="public-profile-email">{developer.email}</p>
 
-            <div className="follow-stats">
-              <span>
-                {followersCount}{" "}
-                {followersCount === 1 ? "Follower" : "Followers"}
-              </span>
-
-              <span>
-                {followingCount} Following
-              </span>
-            </div>
+            <p className="followers-count">
+              {followersCount} Followers · {followingCount} Following
+            </p>
 
             {currentUserId !== id && (
               <button className="follow-btn" onClick={toggleFollow}>
-                {getFollowButtonText()}
+                {follow
+                  ? follow.status === "pending"
+                    ? "Cancel Request"
+                    : "Unfollow"
+                  : "Follow"}
               </button>
             )}
+
+            <Link href={`/chat/${developer.id}`}>
+              <button className="follow-btn">Message</button>
+            </Link>
 
             {message && <p className="follow-message">{message}</p>}
           </div>
