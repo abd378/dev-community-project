@@ -6,27 +6,18 @@ import { supabase } from "@/lib/supabase/client";
 
 export default function NotificationBadge() {
   const [count, setCount] = useState(0);
-  const previousCount = useRef(0);
-  const userInteracted = useRef(false);
+  const oldCount = useRef(0);
+  const soundReady = useRef(false);
 
-  const playNotificationSound = () => {
-    if (!userInteracted.current) return;
+  const playSound = () => {
+    if (!soundReady.current) return;
 
-    const audioContext = new AudioContext();
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
+    const audio = new Audio(
+      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
+    );
 
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-
-    gain.gain.setValueAtTime(0.15, audioContext.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.35);
-
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.35);
+    audio.volume = 0.8;
+    audio.play().catch(() => {});
   };
 
   const loadCount = async () => {
@@ -51,19 +42,19 @@ export default function NotificationBadge() {
       .eq("user_id", user.id)
       .eq("is_read", false);
 
-    const newCount = (followCount || 0) + (notificationCount || 0);
+    const total = (followCount || 0) + (notificationCount || 0);
 
-    if (newCount > previousCount.current) {
-      playNotificationSound();
+    if (total > oldCount.current) {
+      playSound();
     }
 
-    previousCount.current = newCount;
-    setCount(newCount);
+    oldCount.current = total;
+    setCount(total);
   };
 
   useEffect(() => {
     const enableSound = () => {
-      userInteracted.current = true;
+      soundReady.current = true;
     };
 
     window.addEventListener("click", enableSound);
@@ -71,15 +62,15 @@ export default function NotificationBadge() {
 
     loadCount();
 
-    const interval = setInterval(loadCount, 3000);
+    const interval = setInterval(loadCount, 2500);
 
     window.addEventListener("notifications-updated", loadCount);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener("notifications-updated", loadCount);
       window.removeEventListener("click", enableSound);
       window.removeEventListener("touchstart", enableSound);
+      window.removeEventListener("notifications-updated", loadCount);
     };
   }, []);
 

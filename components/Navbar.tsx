@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NotificationBadge from "@/components/NotificationBadge";
 
 export default function Navbar() {
   return (
@@ -29,7 +30,7 @@ export default function Navbar() {
 
         <div className="profile-dropdown">
           <Link href="/stories">Stories</Link>
-          <Link href="/notifications">Notifications</Link>
+          <NotificationBadge />
           <Link href="/profile">Profile</Link>
           <Link href="/login">Login</Link>
           <Link href="/signup">Signup</Link>
