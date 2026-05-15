@@ -7,17 +7,14 @@ import { supabase } from "@/lib/supabase/client";
 export default function NotificationBadge() {
   const [count, setCount] = useState(0);
   const oldCount = useRef(0);
-  const soundReady = useRef(false);
+  const soundAllowed = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const playSound = () => {
-    if (!soundReady.current) return;
+    if (!soundAllowed.current || !audioRef.current) return;
 
-    const audio = new Audio(
-      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
-    );
-
-    audio.volume = 0.8;
-    audio.play().catch(() => {});
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(() => {});
   };
 
   const loadCount = async () => {
@@ -53,12 +50,15 @@ export default function NotificationBadge() {
   };
 
   useEffect(() => {
-    const enableSound = () => {
-      soundReady.current = true;
+    audioRef.current = new Audio("/notification.mp3");
+    audioRef.current.volume = 0.8;
+
+    const allowSound = () => {
+      soundAllowed.current = true;
     };
 
-    window.addEventListener("click", enableSound);
-    window.addEventListener("touchstart", enableSound);
+    window.addEventListener("click", allowSound);
+    window.addEventListener("touchstart", allowSound);
 
     loadCount();
 
@@ -68,16 +68,16 @@ export default function NotificationBadge() {
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener("click", enableSound);
-      window.removeEventListener("touchstart", enableSound);
+      window.removeEventListener("click", allowSound);
+      window.removeEventListener("touchstart", allowSound);
       window.removeEventListener("notifications-updated", loadCount);
     };
   }, []);
 
   return (
-    <Link href="/notifications" className="notification-link">
-      Notifications
-      {count > 0 && <span className="notification-badge">{count}</span>}
+    <Link href="/notifications" className="instagram-nav-icon">
+      🔔
+      {count > 0 && <span className="instagram-badge">{count}</span>}
     </Link>
   );
 }

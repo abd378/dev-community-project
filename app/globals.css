@@ -3620,3 +3620,69 @@ body {
   cursor: pointer;
   background: rgba(239, 68, 68, 0.9);
 }
+/* Instagram style navbar */
+.navbar {
+  height: 72px !important;
+  min-height: 72px !important;
+  padding: 0 28px !important;
+  display: grid !important;
+  grid-template-columns: 1fr auto 1fr !important;
+  align-items: center !important;
+  background: rgba(5, 7, 18, 0.96) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.logo {
+  justify-self: center !important;
+  font-size: 34px !important;
+}
+
+.navbar-left-section {
+  justify-self: start !important;
+}
+
+.profile-menu {
+  justify-self: end !important;
+}
+
+.three-dots-btn,
+.profile-icon,
+.instagram-nav-icon {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: white !important;
+  text-decoration: none !important;
+  font-size: 22px !important;
+  position: relative !important;
+}
+
+.instagram-nav-icon {
+  padding: 0 !important;
+}
+
+.instagram-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-dropdown,
+.side-dropdown-menu {
+  top: 58px !important;
+}
