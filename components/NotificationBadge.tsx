@@ -6,18 +6,26 @@ import { supabase } from "@/lib/supabase/client";
 
 export default function NotificationBadge() {
   const [count, setCount] = useState(0);
-  const oldCount = useRef(0);
-  const soundAllowed = useRef(false);
+
+  const previousCount = useRef(0);
+  const soundEnabled = useRef(false);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const playSound = () => {
-    if (!soundAllowed.current || !audioRef.current) return;
+  const playSound = async () => {
+    if (!soundEnabled.current) return;
 
-    audioRef.current.currentTime = 0;
-    audioRef.current.play().catch(() => {});
+    try {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        await audioRef.current.play();
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  const loadCount = async () => {
+  const loadNotifications = async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -33,51 +41,83 @@ export default function NotificationBadge() {
       .eq("following_id", user.id)
       .eq("status", "pending");
 
-    const { count: notificationCount } = await supabase
+    const { count: notificationsCount } = await supabase
       .from("notifications")
       .select("*", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("is_read", false);
 
-    const total = (followCount || 0) + (notificationCount || 0);
+    const total = (followCount || 0) + (notificationsCount || 0);
 
-    if (total > oldCount.current) {
+    if (total > previousCount.current) {
       playSound();
     }
 
-    oldCount.current = total;
+    previousCount.current = total;
+
     setCount(total);
   };
 
   useEffect(() => {
     audioRef.current = new Audio("/notification.mp3");
-    audioRef.current.volume = 0.8;
 
-    const allowSound = () => {
-      soundAllowed.current = true;
+    const unlockAudio = async () => {
+      soundEnabled.current = true;
+
+      try {
+        if (audioRef.current) {
+          audioRef.current.volume = 0;
+          await audioRef.current.play();
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+          audioRef.current.volume = 1;
+        }
+      } catch (error) {
+        console.log(error);
+      }
     };
 
-    window.addEventListener("click", allowSound);
-    window.addEventListener("touchstart", allowSound);
+    window.addEventListener("click", unlockAudio);
+    window.addEventListener("touchstart", unlockAudio);
 
-    loadCount();
+    loadNotifications();
 
-    const interval = setInterval(loadCount, 2500);
+    const interval = setInterval(loadNotifications, 3000);
 
-    window.addEventListener("notifications-updated", loadCount);
+    window.addEventListener(
+      "notifications-updated",
+      loadNotifications
+    );
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener("click", allowSound);
-      window.removeEventListener("touchstart", allowSound);
-      window.removeEventListener("notifications-updated", loadCount);
+
+      window.removeEventListener("click", unlockAudio);
+
+      window.removeEventListener(
+        "touchstart",
+        unlockAudio
+      );
+
+      window.removeEventListener(
+        "notifications-updated",
+        loadNotifications
+      );
     };
   }, []);
 
   return (
-    <Link href="/notifications" className="instagram-nav-icon">
+    <Link
+      href="/notifications"
+      className="instagram-nav-icon"
+    >
       🔔
-      {count > 0 && <span className="instagram-badge">{count}</span>}
+
+      {count > 0 && (
+        <span className="instagram-badge">
+          {count}
+        </span>
+      )}
     </Link>
   );
 }
